@@ -139,7 +139,8 @@ LV_IMG_DECLARE(bongo_inhale);
 LV_IMG_DECLARE(bongo_exhale);
 
 static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    lv_obj_t *canvas = lv_obj_get_child(widget, 0);
+    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    lv_obj_t *canvas = w->top_canvas;
 
     lv_draw_label_dsc_t label_dsc;
     init_label_dsc(&label_dsc, LVGL_FOREGROUND, &lv_font_montserrat_16, LV_TEXT_ALIGN_RIGHT);
@@ -256,7 +257,8 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
 }
 
 static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    lv_obj_t *canvas = lv_obj_get_child(widget, 1);
+    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    lv_obj_t *canvas = w->middle_canvas;
 
     lv_draw_rect_dsc_t rect_black_dsc;
     init_rect_dsc(&rect_black_dsc, LVGL_BACKGROUND);
@@ -373,15 +375,18 @@ static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status
 }
 
 static void draw_bottom(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    lv_obj_t *canvas = lv_obj_get_child(widget, 2);
+    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    lv_obj_t *canvas = w->bottom_canvas;
 
     lv_draw_rect_dsc_t rect_black_dsc;
     init_rect_dsc(&rect_black_dsc, LVGL_BACKGROUND);
     lv_draw_label_dsc_t label_dsc;
     init_label_dsc(&label_dsc, LVGL_FOREGROUND, &lv_font_montserrat_14, LV_TEXT_ALIGN_CENTER);
 
+    // Clear this specific canvas only
     lv_canvas_draw_rect(canvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE, &rect_black_dsc);
 
+    // Draw layer text
     if (state->layer_label == NULL) {
         char text[10] = {};
         sprintf(text, "LAYER %i", state->layer_index);
@@ -435,8 +440,7 @@ static void set_output_status(struct zmk_widget_status *widget,
     widget->state.active_profile_connected = state->active_profile_connected;
     widget->state.active_profile_bonded = state->active_profile_bonded;
 
-    draw_top(widget->obj, widget->cbuf, &widget->state);
-    draw_middle(widget->obj, widget->cbuf2, &widget->state);
+    draw_top(widget->obj, widget->cbuf, &widget->state);  // Only draw the top section
 }
 
 static void output_status_update_cb(struct output_status_state state) {
@@ -467,8 +471,7 @@ ZMK_SUBSCRIPTION(widget_output_status, zmk_ble_active_profile_changed);
 static void set_layer_status(struct zmk_widget_status *widget, struct layer_status_state state) {
     widget->state.layer_index = state.index;
     widget->state.layer_label = state.label;
-    // Make sure we only draw the bottom section for layer updates
-    draw_bottom(widget->obj, widget->cbuf3, &widget->state);
+    draw_bottom(widget->obj, widget->cbuf3, &widget->state);  // Only update bottom canvas
 }
 
 static void layer_status_update_cb(struct layer_status_state state) {
@@ -729,17 +732,17 @@ int zmk_widget_status_init(struct zmk_widget_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
     lv_obj_set_size(widget->obj, 160, 68);
     
-    lv_obj_t *top = lv_canvas_create(widget->obj);
-    lv_obj_align(top, LV_ALIGN_TOP_RIGHT, 0, 0);
-    lv_canvas_set_buffer(top, widget->cbuf, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    widget->top_canvas = lv_canvas_create(widget->obj);
+    lv_obj_align(widget->top_canvas, LV_ALIGN_TOP_RIGHT, 0, 0);
+    lv_canvas_set_buffer(widget->top_canvas, widget->cbuf, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
     
-    lv_obj_t *middle = lv_canvas_create(widget->obj);
-    lv_obj_align(middle, LV_ALIGN_TOP_LEFT, 24, 0);
-    lv_canvas_set_buffer(middle, widget->cbuf2, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    widget->middle_canvas = lv_canvas_create(widget->obj);
+    lv_obj_align(widget->middle_canvas, LV_ALIGN_CENTER, 24, 0);
+    lv_canvas_set_buffer(widget->middle_canvas, widget->cbuf2, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
     
-    lv_obj_t *bottom = lv_canvas_create(widget->obj);
-    lv_obj_align(bottom, LV_ALIGN_TOP_LEFT, -44, 0);
-    lv_canvas_set_buffer(bottom, widget->cbuf3, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    widget->bottom_canvas = lv_canvas_create(widget->obj);
+    lv_obj_align(widget->bottom_canvas, LV_ALIGN_BOTTOM_LEFT, -44, 0);
+    lv_canvas_set_buffer(widget->bottom_canvas, widget->cbuf3, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
 
     sys_slist_append(&widgets, &widget->node);
     
