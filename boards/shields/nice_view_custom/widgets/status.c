@@ -139,7 +139,7 @@ LV_IMG_DECLARE(bongo_inhale);
 LV_IMG_DECLARE(bongo_exhale);
 
 static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
     lv_obj_t *canvas = w->top_canvas;
 
     lv_draw_label_dsc_t label_dsc;
@@ -257,7 +257,7 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
 }
 
 static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
     lv_obj_t *canvas = w->middle_canvas;
 
     lv_draw_rect_dsc_t rect_black_dsc;
@@ -375,7 +375,7 @@ static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status
 }
 
 static void draw_bottom(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = CONTAINER_OF(widget, struct zmk_widget_status, obj);
+    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
     lv_obj_t *canvas = w->bottom_canvas;
 
     lv_draw_rect_dsc_t rect_black_dsc;
