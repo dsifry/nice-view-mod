@@ -14,9 +14,6 @@
 struct zmk_widget_status {
     sys_snode_t node;
     lv_obj_t *obj;
-    lv_obj_t *top_canvas;
-    lv_obj_t *middle_canvas;
-    lv_obj_t *bottom_canvas;
     lv_color_t cbuf[CANVAS_SIZE * CANVAS_SIZE];      // Full size for top
     lv_color_t cbuf2[CANVAS_SIZE * CANVAS_SIZE];     // Full size for middle
     lv_color_t cbuf3[CANVAS_SIZE * CANVAS_SIZE];     // Full size for bottom

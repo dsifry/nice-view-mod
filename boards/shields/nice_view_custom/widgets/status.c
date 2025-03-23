@@ -139,8 +139,7 @@ LV_IMG_DECLARE(bongo_inhale);
 LV_IMG_DECLARE(bongo_exhale);
 
 static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
-    lv_obj_t *canvas = w->top_canvas;
+    lv_obj_t *canvas = lv_obj_get_child(widget, 0);
 
     // Clear canvas first
     lv_canvas_fill_bg(canvas, LVGL_BACKGROUND, LV_OPA_COVER);
@@ -257,8 +256,7 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
 }
 
 static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
-    lv_obj_t *canvas = w->middle_canvas;
+    lv_obj_t *canvas = lv_obj_get_child(widget, 1);
 
     lv_draw_rect_dsc_t rect_black_dsc;
     init_rect_dsc(&rect_black_dsc, LVGL_BACKGROUND);
@@ -375,8 +373,7 @@ static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status
 }
 
 static void draw_bottom(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
-    struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
-    lv_obj_t *canvas = w->bottom_canvas;
+    lv_obj_t *canvas = lv_obj_get_child(widget, 2);
 
     lv_draw_rect_dsc_t rect_black_dsc;
     init_rect_dsc(&rect_black_dsc, LVGL_BACKGROUND);
@@ -730,27 +727,19 @@ static void animation_work_handler(struct k_work *work) {
 
 int zmk_widget_status_init(struct zmk_widget_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
-    lv_obj_set_size(widget->obj, 160, 68);  // Full widget size is 160x68
+    lv_obj_set_size(widget->obj, 160, 68);
     
-    // Create top canvas with correct size
-    widget->top_canvas = lv_canvas_create(widget->obj);
-    lv_obj_align(widget->top_canvas, LV_ALIGN_TOP_RIGHT, 0, 0);
-    lv_canvas_set_buffer(widget->top_canvas, widget->cbuf, 68, 68, LV_IMG_CF_TRUE_COLOR);  // Set actual dimensions
+    lv_obj_t *top = lv_canvas_create(widget->obj);
+    lv_obj_align(top, LV_ALIGN_TOP_RIGHT, 0, 0);
+    lv_canvas_set_buffer(top, widget->cbuf, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
     
-    // Create middle canvas with correct size
-    widget->middle_canvas = lv_canvas_create(widget->obj);
-    lv_obj_align(widget->middle_canvas, LV_ALIGN_CENTER, 24, 0);
-    lv_canvas_set_buffer(widget->middle_canvas, widget->cbuf2, 68, 68, LV_IMG_CF_TRUE_COLOR);
+    lv_obj_t *middle = lv_canvas_create(widget->obj);
+    lv_obj_align(middle, LV_ALIGN_CENTER, 24, 0);
+    lv_canvas_set_buffer(middle, widget->cbuf2, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
     
-    // Create bottom canvas with correct size
-    widget->bottom_canvas = lv_canvas_create(widget->obj);
-    lv_obj_align(widget->bottom_canvas, LV_ALIGN_BOTTOM_LEFT, -44, 0);
-    lv_canvas_set_buffer(widget->bottom_canvas, widget->cbuf3, 68, 68, LV_IMG_CF_TRUE_COLOR);
-
-    // Set canvas background colors
-    lv_canvas_fill_bg(widget->top_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
-    lv_canvas_fill_bg(widget->middle_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
-    lv_canvas_fill_bg(widget->bottom_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
+    lv_obj_t *bottom = lv_canvas_create(widget->obj);
+    lv_obj_align(bottom, LV_ALIGN_BOTTOM_LEFT, -44, 0);
+    lv_canvas_set_buffer(bottom, widget->cbuf3, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
 
     sys_slist_append(&widgets, &widget->node);
     
