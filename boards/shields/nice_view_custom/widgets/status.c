@@ -142,6 +142,9 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
     struct zmk_widget_status *w = (struct zmk_widget_status *)widget;
     lv_obj_t *canvas = w->top_canvas;
 
+    // Clear canvas first
+    lv_canvas_fill_bg(canvas, LVGL_BACKGROUND, LV_OPA_COVER);
+    
     lv_draw_label_dsc_t label_dsc;
     init_label_dsc(&label_dsc, LVGL_FOREGROUND, &lv_font_montserrat_16, LV_TEXT_ALIGN_RIGHT);
     lv_draw_label_dsc_t label_dsc_wpm;
@@ -152,9 +155,6 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
     init_rect_dsc(&rect_white_dsc, LVGL_FOREGROUND);
     lv_draw_line_dsc_t line_dsc;
     init_line_dsc(&line_dsc, LVGL_FOREGROUND, 1);
-
-    // Fill background
-    lv_canvas_draw_rect(canvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE, &rect_black_dsc);
 
     // Draw battery
     draw_battery(canvas, state);
@@ -252,8 +252,8 @@ static void draw_top(lv_obj_t *widget, lv_color_t cbuf[], const struct status_st
     }
     #endif
 
-    // Rotate canvas
-    rotate_canvas(canvas, cbuf);
+    // No need to rotate - let LVGL handle orientation
+    // rotate_canvas(canvas, cbuf);
 }
 
 static void draw_middle(lv_obj_t *widget, lv_color_t cbuf[], const struct status_state *state) {
@@ -730,19 +730,27 @@ static void animation_work_handler(struct k_work *work) {
 
 int zmk_widget_status_init(struct zmk_widget_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
-    lv_obj_set_size(widget->obj, 160, 68);
+    lv_obj_set_size(widget->obj, 160, 68);  // Full widget size is 160x68
     
+    // Create top canvas with correct size
     widget->top_canvas = lv_canvas_create(widget->obj);
     lv_obj_align(widget->top_canvas, LV_ALIGN_TOP_RIGHT, 0, 0);
-    lv_canvas_set_buffer(widget->top_canvas, widget->cbuf, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_set_buffer(widget->top_canvas, widget->cbuf, 68, 68, LV_IMG_CF_TRUE_COLOR);  // Set actual dimensions
     
+    // Create middle canvas with correct size
     widget->middle_canvas = lv_canvas_create(widget->obj);
     lv_obj_align(widget->middle_canvas, LV_ALIGN_CENTER, 24, 0);
-    lv_canvas_set_buffer(widget->middle_canvas, widget->cbuf2, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_set_buffer(widget->middle_canvas, widget->cbuf2, 68, 68, LV_IMG_CF_TRUE_COLOR);
     
+    // Create bottom canvas with correct size
     widget->bottom_canvas = lv_canvas_create(widget->obj);
     lv_obj_align(widget->bottom_canvas, LV_ALIGN_BOTTOM_LEFT, -44, 0);
-    lv_canvas_set_buffer(widget->bottom_canvas, widget->cbuf3, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_set_buffer(widget->bottom_canvas, widget->cbuf3, 68, 68, LV_IMG_CF_TRUE_COLOR);
+
+    // Set canvas background colors
+    lv_canvas_fill_bg(widget->top_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
+    lv_canvas_fill_bg(widget->middle_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
+    lv_canvas_fill_bg(widget->bottom_canvas, LVGL_BACKGROUND, LV_OPA_COVER);
 
     sys_slist_append(&widgets, &widget->node);
     
@@ -757,7 +765,7 @@ int zmk_widget_status_init(struct zmk_widget_status *widget, lv_obj_t *parent) {
     k_work_init_delayable(&modifier_work, modifier_work_handler);
     k_work_schedule(&animation_work, K_MSEC(IDLE_ANIMATION_INTERVAL));
 
-    // Initialize modifier states to inactive (no underlines)
+    // Initialize modifier states to inactive
     for (int i = 0; i < NUM_SYMBOLS; i++) {
         modifier_symbols[i]->is_active = false;
     }
