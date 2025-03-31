@@ -37,6 +37,28 @@ manifest:
     path: config
 ```
 
+This will use the latest code from the main branch. To use version 1.0, use this:
+
+```yml
+manifest:
+  remotes:
+    # zmk official
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: dsifry #new entry
+      url-base: https://github.com/dsifry
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: main
+      import: app/west.yml
+    - name: nice-view-mod
+      remote: dsifry 
+      revision: v1.0 # new entry for v1.0
+  self:
+    path: config
+```
+
 Now simply swap out the default nice_view shield on the board for the custom one in your build.yaml file.
 
 ```yml
